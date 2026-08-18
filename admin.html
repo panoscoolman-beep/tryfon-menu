@@ -80,6 +80,12 @@
   .sw-f{background:var(--card);border:2px solid var(--line);border-radius:12px;
     padding:16px 12px;color:var(--ink);font-size:18px}
   .sw-f.on{border-color:var(--ink)}
+  .presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .pbtn{background:var(--card);border:2px solid var(--line);border-radius:12px;
+    padding:10px 8px;color:var(--ink);font-size:13px;line-height:1.3}
+  .pbtn.on{border-color:var(--ink)}
+  .pbtn i{display:block;height:44px;border-radius:8px;margin-bottom:7px;
+    background:#efe3d2 center/cover;border:1px solid var(--line)}
   .bgrow{display:flex;gap:10px;align-items:center}
   .bgthumb{width:88px;height:56px;flex:0 0 auto;border-radius:10px;border:1px solid var(--line);
     background:#e8ddcb center/cover no-repeat;display:grid;place-items:center;
@@ -259,8 +265,11 @@ function viewSettings(){
   const s = S.settings;
   S.pickTheme = S.pickTheme || s.theme || 'taverna';
   S.pickFont  = S.pickFont  || s.font  || 'classic';
-  if (S.pickBg  === undefined) S.pickBg  = s.bg_url || '';
-  if (S.pickDim === undefined) S.pickDim = s.bg_dim ?? 70;
+  if (S.pickBg     === undefined) S.pickBg     = s.bg_url || '';
+  if (S.pickDim    === undefined) S.pickDim    = s.bg_dim ?? 70;
+  if (S.pickPreset === undefined) S.pickPreset = s.bg_preset || 'none';
+  if (S.pickFrame  === undefined) S.pickFrame  = !!s.bg_frame;
+  if (S.pickLogo   === undefined) S.pickLogo   = !!s.show_logo;
   Object.keys(FONTS).forEach(loadFont);
 
   const themeBtns = Object.entries(THEMES).map(([k, t]) =>
@@ -276,17 +285,31 @@ function viewSettings(){
 
   return '<label>Θέμα οθόνης</label><div class="swatches">' + themeBtns + '</div>'
     + '<label>Γραμματοσειρά</label><div class="swatches">' + fontBtns + '</div>'
-    + '<label>Δική σου φωτογραφία για φόντο</label>'
-    + '<div class="bgrow">'
-      + '<div class="bgthumb" id="bgthumb"></div>'
-      + '<label class="filebtn">Επιλογή εικόνας<input type="file" accept="image/*" onchange="pickBgFile(this)"></label>'
-      + (S.pickBg ? '<button class="danger sm" onclick="clearBg()">Αφαίρεση</button>' : '')
+    + '<label>Φόντο οθόνης</label>'
+    + '<div class="presets">'
+      + presetBtn('none',  'Κανένα', '')
+      + presetBtn('paper', 'Χαρτί Τρύφων', 'assets/paper-tex.jpg')
+      + presetBtn('photo', 'Δική μου φωτογραφία', S.pickBg || '')
     + '</div>'
-    + '<label>Πόσο σκοτεινιάζει η φωτογραφία <span id="dimval">' + S.pickDim + '%</span></label>'
-    + '<input type="range" id="s_dim" min="20" max="95" step="5" value="' + S.pickDim + '"'
-      + ' oninput="document.getElementById(\'dimval\').textContent=this.value+\'%\'"'
-      + ' onchange="S.pickDim=Number(this.value);syncPick()">'
-    + '<p class="hint">Χωρίς σκοτείνιασμα η φωτογραφία τρώει τα γράμματα. Κατέβασέ το μέχρι να δεις ότι το μενού διαβάζεται από την άλλη άκρη του μαγαζιού.</p>'
+    + (S.pickPreset === 'photo'
+        ? '<div class="bgrow" style="margin-top:10px">'
+          + '<div class="bgthumb" id="bgthumb"></div>'
+          + '<label class="filebtn">Επιλογή εικόνας<input type="file" accept="image/*" onchange="pickBgFile(this)"></label>'
+          + (S.pickBg ? '<button class="danger sm" onclick="clearBg()">Αφαίρεση</button>' : '')
+        + '</div>' : '')
+    + (S.pickPreset !== 'none'
+        ? '<label>Πόσο σκοτεινιάζει το φόντο <span id="dimval">' + S.pickDim + '%</span></label>'
+          + '<input type="range" id="s_dim" min="0" max="95" step="5" value="' + S.pickDim + '"'
+          + ' oninput="document.getElementById(\'dimval\').textContent=this.value+\'%\'"'
+          + ' onchange="S.pickDim=Number(this.value);syncPick()">'
+          + '<p class="hint">Στο χαρτί του μαγαζιού άφησέ το χαμηλά. Σε φωτογραφία ανέβασέ το μέχρι να διαβάζεται το μενού από την άλλη άκρη του μαγαζιού.</p>'
+        : '')
+    + '<label>Στολίδια</label>'
+    + '<div class="row"><div class="ctrls" style="margin-top:0">'
+      + '<span class="sw' + (S.pickFrame ? ' on' : '') + '" onclick="S.pickFrame=!S.pickFrame;draw()"><i></i>Κορνίζα</span>'
+      + '<span class="spacer"></span>'
+      + '<span class="sw' + (S.pickLogo ? ' on' : '') + '" onclick="S.pickLogo=!S.pickLogo;draw()"><i></i>Λογότυπο</span>'
+    + '</div><p class="hint" style="margin-top:6px">Με το λογότυπο ενεργό, η οθόνη δείχνει το σήμα του μαγαζιού αντί για το όνομα σε κείμενο.</p></div>'
     + '<label>Προεπισκόπηση οθόνης</label>'
     + '<div class="preview"><iframe id="prev" src="tv.html?theme=' + S.pickTheme + '&font=' + S.pickFont + '"></iframe></div>'
     + '<p class="hint">Η προεπισκόπηση δείχνει τα πραγματικά πιάτα. Τίποτα δεν αλλάζει στην οθόνη του μαγαζιού μέχρι να πατήσεις Αποθήκευση.</p>'
@@ -298,6 +321,17 @@ function viewSettings(){
     + '<p class="hint">Το υποσέλιδο εμφανίζεται μόνιμα στην οθόνη και στον κατάλογο του πελάτη. Θυμήσου ότι ο έντυπος τιμοκατάλογος παραμένει υποχρεωτικός.</p>';
 }
 
+function presetBtn(k, label, img){
+  return '<button class="pbtn' + (S.pickPreset === k ? ' on' : '') + '" onclick="pickPreset(\'' + k + '\')">'
+    + '<i style="background-image:' + (img ? 'url(\'' + img + '\')' : 'none') + '"></i>' + label + '</button>';
+}
+function pickPreset(k){
+  S.pickPreset = k;
+  // Το χαρτί του μαγαζιού θέλει τα δικά του χρώματα και ελαφρύ πέπλο
+  if (k === 'paper'){ S.pickTheme = 'tryfon'; if (S.pickDim > 40) S.pickDim = 12; }
+  if (k === 'photo' && S.pickDim < 40) S.pickDim = 70;
+  draw();
+}
 function pickTheme(k){ S.pickTheme = k; syncPick(); }
 function pickFont(k){ S.pickFont = k; syncPick(); }
 function syncPick(){
@@ -310,7 +344,8 @@ function syncPick(){
   }
   const f = document.getElementById('prev');
   if (f) f.src = 'tv.html?theme=' + S.pickTheme + '&font=' + S.pickFont
-    + '&bg=' + encodeURIComponent(S.pickBg || '') + '&dim=' + S.pickDim;
+    + '&preset=' + S.pickPreset + '&bg=' + encodeURIComponent(S.pickBg || '')
+    + '&dim=' + S.pickDim + '&frame=' + (S.pickFrame ? 1 : 0) + '&logo=' + (S.pickLogo ? 1 : 0);
 }
 
 async function pickBgFile(input){
@@ -320,6 +355,7 @@ async function pickBgFile(input){
   toast('Ανεβαίνει η εικόνα…');
   try {
     S.pickBg = await uploadBackground(file);
+    S.pickPreset = 'photo';
     draw();
     toast('Ανέβηκε. Ρύθμισε το σκοτείνιασμα και πάτα Αποθήκευση');
   } catch (e) {
@@ -411,6 +447,9 @@ async function saveSettings(){
     font: S.pickFont || 'classic',
     bg_url: S.pickBg || null,
     bg_dim: S.pickDim ?? 70,
+    bg_preset: S.pickPreset || 'none',
+    bg_frame: !!S.pickFrame,
+    show_logo: !!S.pickLogo,
     updated_at: new Date().toISOString()
   }).eq('id', 1);
   if (error) return toast(error.message, true);

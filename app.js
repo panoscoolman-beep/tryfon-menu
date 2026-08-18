@@ -12,8 +12,13 @@ const THEMES = {
   aigaio:   { name: 'Αιγαίο',   ink:'#0c1a24', bg2:'#153241', text:'#eef5f8', muted:'#8fa9b8', accent:'#e0a458', olive:'#6fb0a8', line:'rgba(238,245,248,.15)' },
   ladi:     { name: 'Λαδί',     ink:'#12160e', bg2:'#212b18', text:'#f1efe1', muted:'#a5a98b', accent:'#cdba52', olive:'#9fb56a', line:'rgba(241,239,225,.14)' },
   krasi:    { name: 'Κρασί',    ink:'#1a0f11', bg2:'#2e1a1d', text:'#f7ecea', muted:'#b1928f', accent:'#d9705e', olive:'#9aa86b', line:'rgba(247,236,234,.14)' },
-  harti:    { name: 'Χαρτί',    ink:'#f4ece0', bg2:'#fdf8f0', text:'#241d16', muted:'#7d6b56', accent:'#a8541f', olive:'#5f7040', line:'rgba(36,29,22,.16)' }
+  harti:    { name: 'Χαρτί',    ink:'#f4ece0', bg2:'#fdf8f0', text:'#241d16', muted:'#7d6b56', accent:'#a8541f', olive:'#5f7040', line:'rgba(36,29,22,.16)' },
+  tryfon:   { name: 'Τρύφων',   ink:'#e9b98d', bg2:'#f0c9a4', text:'#3a2418', muted:'#8a6045', accent:'#8b1d1c', olive:'#6b6a2f', line:'rgba(139,29,28,.30)' }
 };
+
+/* Το χαρτί του μαγαζιού. Το λογότυπο και η κορνίζα είναι διανυσματικά (SVG μάσκες),
+   οπότε κουμπώνουν σε κάθε οθόνη — κάθετη, οριζόντια, οποιαδήποτε ανάλυση. */
+const PAPER_URL = 'assets/paper-tex.jpg';
 
 /* ---------- Γραμματοσειρές (όλες με ελληνικούς χαρακτήρες) ---------- */
 const FONTS = {
@@ -53,16 +58,27 @@ function applyLook(settings, opts) {
 
   if (opts && opts.fontOnly) return;
 
-  // Φόντο εικόνας + πέπλο ώστε να παραμένει ευανάγνωστο
-  const bg = q.has('bg') ? q.get('bg') : (settings.bg_url || '');
+  // Φόντο: χαρτί μαγαζιού, δική του φωτογραφία, ή τίποτα
+  const preset = q.has('preset') ? q.get('preset') : (settings.bg_preset || 'none');
+  const bg = preset === 'paper' ? PAPER_URL
+           : preset === 'photo' ? (q.has('bg') ? q.get('bg') : (settings.bg_url || ''))
+           : '';
   const dim = q.has('dim') ? Number(q.get('dim')) : (settings.bg_dim ?? 70);
   if (bg) {
     r.setProperty('--bgimg', 'url("' + bg.replace(/"/g, '%22') + '")');
     r.setProperty('--bgdisp', 'block');
-    r.setProperty('--dim', Math.min(95, Math.max(20, dim)) / 100);
+    r.setProperty('--dim', Math.min(95, Math.max(0, dim)) / 100);
   } else {
     r.setProperty('--bgdisp', 'none');
   }
+
+  // Κορνίζα και λογότυπο — σχεδιάζονται με CSS, δεν είναι μέρος της εικόνας
+  const framed = q.has('frame') ? q.get('frame') === '1' : !!settings.bg_frame;
+  const logo = q.has('logo') ? q.get('logo') === '1' : !!settings.show_logo;
+  r.setProperty('--framedisp', framed ? 'block' : 'none');
+  r.setProperty('--fpv', framed ? 'calc(var(--u)*5)' : '0px');
+  r.setProperty('--fph', framed ? '4.2%' : '0px');
+  document.body.classList.toggle('haslogo', logo);
 
   r.setProperty('--ink', t.ink);
   r.setProperty('--bg2', t.bg2);
@@ -85,7 +101,7 @@ async function loadMenu() {
     cats: (cats.data || []).filter((c) => c.is_visible),
     allCats: cats.data || [],
     items: items.data || [],
-    settings: settings.data || { shop_name: 'Τρύφων', page_seconds: 12, theme: 'taverna', font: 'classic', bg_url: null, bg_dim: 70 }
+    settings: settings.data || { shop_name: 'Τρύφων', page_seconds: 12, theme: 'taverna', font: 'classic', bg_url: null, bg_dim: 70, bg_preset: 'none', bg_frame: false, show_logo: false }
   };
 }
 

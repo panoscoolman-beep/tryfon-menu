@@ -28,8 +28,29 @@
   #bg{background-image:var(--bgimg,none);background-size:cover;background-position:center;z-index:0}
   #scrim{background:var(--ink);opacity:var(--dim,.7);z-index:1}
 
+  /* Κορνίζα του μαγαζιού: γραμμή σε CSS, στολίδια σε διανυσματική μάσκα.
+     Έτσι κάθεται σωστά σε κάθε αναλογία οθόνης, χωρίς παραμόρφωση. */
+  #ornaments{position:fixed;inset:3.6% 4.2%;border:.3vh solid var(--accent);
+    display:var(--framedisp,none);z-index:3;pointer-events:none}
+  #ornaments span{position:absolute;width:8.4vh;height:8.4vh;background:var(--accent);
+    -webkit-mask:url(assets/corner.svg) center/contain no-repeat;
+    mask:url(assets/corner.svg) center/contain no-repeat}
+  #ornaments .tl{top:-3.1vh;left:-3.1vh}
+  #ornaments .tr{top:-3.1vh;right:-3.1vh;transform:scaleX(-1)}
+  #ornaments .bl{bottom:-3.1vh;left:-3.1vh;transform:scaleY(-1)}
+  #ornaments .br{bottom:-3.1vh;right:-3.1vh;transform:scale(-1,-1)}
+
+  .logo{display:none;height:calc(var(--u)*13);aspect-ratio:973/651;background:var(--accent);
+    -webkit-mask:url(assets/logo.svg) center/contain no-repeat;
+    mask:url(assets/logo.svg) center/contain no-repeat}
+  body.haslogo .brand,body.haslogo .tagline{display:none}
+  body.haslogo .logo{display:block}
+  body.haslogo header{justify-content:center;position:relative}
+  body.haslogo .clock{position:absolute;right:0;bottom:calc(var(--u)*1.6)}
+
   #frame{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;min-height:0;
-    animation:drift 720s linear infinite;padding:calc(var(--u)*3) calc(var(--u)*4)}
+    animation:drift 720s linear infinite;
+    padding:calc(var(--u)*3 + var(--fpv,0px)) calc(var(--u)*4 + var(--fph,0px))}
   @keyframes drift{
     0%{transform:translate(0,0)} 25%{transform:translate(5px,4px)}
     50%{transform:translate(0,8px)} 75%{transform:translate(-5px,4px)} 100%{transform:translate(0,0)}
@@ -51,6 +72,8 @@
   .page.on{opacity:1}
   #probe{position:absolute;inset:0;visibility:hidden;pointer-events:none;
     display:flex;flex-direction:column;min-height:0}
+  /* Μικρό περιθώριο ασφαλείας: ο μετρητής να είναι λίγο πιο αυστηρός από την πραγματικότητα */
+  #probe .items{padding-bottom:8px}
 
   .cat{flex:0 0 auto;display:flex;align-items:flex-end;gap:calc(var(--u)*1.6);
     margin-bottom:calc(var(--u)*2)}
@@ -102,8 +125,10 @@
 </head>
 <body>
 <div id="bg"></div><div id="scrim"></div>
+<div id="ornaments"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>
 <div id="frame">
   <header>
+    <div class="logo"></div>
     <div>
       <div class="brand" id="brand">Τρύφων</div>
       <div class="tagline" id="tagline"></div>
@@ -125,6 +150,7 @@
 <script src="app.js"></script>
 <script>
 let pages = [], idx = 0, timer = null, seconds = 12;
+let lastData = null, fontsHooked = false;
 
 function tickClock(){
   document.getElementById('clock').textContent =
@@ -187,7 +213,14 @@ function paginate(defs){
 }
 
 function render(data){
+  lastData = data;
   applyLook(data.settings);
+  // Οι γραμματοσειρές κατεβαίνουν ασύγχρονα και αλλάζουν τα ύψη των γραμμών.
+  // Ξαναμετράμε μόλις φορτώσουν, αλλιώς η τελευταία σειρά κόβεται κατά λίγα pixel.
+  if (!fontsHooked && document.fonts && document.fonts.ready) {
+    fontsHooked = true;
+    document.fonts.ready.then(() => { if (lastData) render(lastData); });
+  }
   document.getElementById('brand').textContent = data.settings.shop_name || 'Τρύφων';
   document.getElementById('tagline').textContent = data.settings.tagline || '';
   document.getElementById('note').textContent = data.settings.footer_note || '';
