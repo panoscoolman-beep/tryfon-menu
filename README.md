@@ -26,12 +26,16 @@ Project: `tryfon-menu` — ref `jiqmxwslfrhnwphypuds` (eu-central-1, free tier).
 
 Πίνακες: `categories`, `menu_items`, `settings`, `profiles`.
 
-### Λογαριασμοί (ΑΛΛΑΞΕ ΤΟΥΣ ΚΩΔΙΚΟΥΣ)
+### Λογαριασμοί
 
-| Ρόλος | Email | Κωδικός |
-|---|---|---|
-| Ιδιοκτήτης | `afentiko@tryfon.gr` | `tryfon2026!` |
-| Προσωπικό | `magazi@tryfon.gr` | `magazi2026!` |
+| Ρόλος | Email |
+|---|---|
+| Ιδιοκτήτης | `afentiko@tryfon.gr` |
+| Προσωπικό | `magazi@tryfon.gr` |
+
+Οι κωδικοί **δεν μπαίνουν ποτέ σε αυτό το αρχείο** — το repo είναι δημόσιο.
+Ορίζονται και αλλάζουν από το Supabase dashboard → Authentication → Users.
+Ο ρόλος κάθε λογαριασμού ζει στον πίνακα `profiles` (`owner` / `staff`).
 
 ### Πώς επιβάλλονται οι ρόλοι
 
