@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<title>Μεζεδοπωλείο Τρύφων — Κατάλογος</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6efe4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+  :root{--bg:#f6efe4;--card:#fffaf2;--ink:#231c15;--muted:#8a7a66;
+        --accent:#b8632a;--olive:#6d7d47;--line:#e2d6c4;
+        --fh:'Alegreya','Noto Serif',Georgia,serif;--fb:'Roboto',system-ui,sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--ink);font-family:var(--fb);
+       padding-bottom:env(safe-area-inset-bottom)}
+  .wrap{max-width:640px;margin:0 auto;padding:0 18px 48px}
+
+  header{text-align:center;padding:34px 0 18px}
+  h1{font-family:var(--fh);font-size:34px;line-height:1.1}
+  .tagline{color:var(--muted);font-size:12px;letter-spacing:.24em;
+           text-transform:uppercase;margin-top:8px}
+
+  nav{position:sticky;top:0;z-index:5;background:var(--bg);
+      margin:0 -18px;padding:10px 18px;border-bottom:1px solid var(--line);
+      display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav a{flex:0 0 auto;text-decoration:none;color:var(--ink);font-size:14px;
+        padding:8px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card)}
+
+  .specials{margin:22px 0 6px;padding:16px 18px;border-radius:16px;
+            background:var(--card);border:1px solid var(--line);
+            border-left:4px solid var(--olive)}
+  .specials h3{font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+               color:var(--olive);margin-bottom:12px}
+
+  section{margin-top:30px;scroll-margin-top:64px}
+  h2{font-family:var(--fh);font-size:24px;color:var(--accent)}
+  .sub{color:var(--muted);font-size:14px;font-style:italic;margin-top:2px}
+  ul{list-style:none;margin-top:14px}
+  li{display:grid;grid-template-columns:1fr auto;column-gap:16px;
+     padding:13px 0;border-bottom:1px solid var(--line)}
+  li:last-child{border-bottom:0}
+  .nm{font-size:17px;font-weight:500}
+  .desc{grid-column:1;color:var(--muted);font-size:14px;line-height:1.35;margin-top:3px}
+  .pr{font-family:var(--fh);font-weight:700;font-size:18px;
+      font-variant-numeric:tabular-nums;white-space:nowrap}
+  .unit{display:block;color:var(--muted);font-size:12px;font-weight:400;
+        font-family:var(--fb);text-align:right}
+  .tag{display:inline-block;margin-left:8px;font-size:10px;letter-spacing:.1em;
+       text-transform:uppercase;padding:2px 8px;border-radius:99px;
+       border:1px solid var(--line);color:var(--muted);vertical-align:middle}
+  .tag.hot{background:var(--olive);border-color:var(--olive);color:#fff;font-weight:700}
+  li.out{opacity:.42}
+  li.out .nm{text-decoration:line-through}
+
+  footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);
+         color:var(--muted);font-size:12px;line-height:1.6;text-align:center}
+  .load{text-align:center;color:var(--muted);padding:60px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1 id="brand">Τρύφων</h1><div class="tagline" id="tagline"></div></header>
+  <nav id="nav"></nav>
+  <div id="body"><div class="load">Φόρτωση καταλόγου…</div></div>
+  <footer id="note"></footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+function li(it){
+  const tags = [];
+  if (it.is_special && it.is_available) tags.push('<span class="tag hot">Σήμερα</span>');
+  if (!it.is_available) tags.push('<span class="tag">Τελείωσε</span>');
+  if (it.notes) tags.push('<span class="tag">'+esc(it.notes)+'</span>');
+  return '<li class="'+(it.is_available?'':'out')+'">'
+    + '<div class="nm">'+esc(it.name)+tags.join('')+'</div>'
+    + '<div class="pr">'+money(it.price)+(it.unit?'<span class="unit">'+esc(it.unit)+'</span>':'')+'</div>'
+    + (it.description ? '<div class="desc">'+esc(it.description)+'</div>' : '')
+    + '</li>';
+}
+
+function render(d){
+  applyLook(d.settings, { fontOnly: true });
+  document.getElementById('brand').textContent = d.settings.shop_name || 'Τρύφων';
+  document.getElementById('tagline').textContent = d.settings.tagline || '';
+  document.getElementById('note').textContent = d.settings.footer_note || '';
+  document.getElementById('nav').innerHTML =
+    d.cats.map(c => '<a href="#c'+c.id+'">'+esc(c.name)+'</a>').join('');
+
+  const specials = d.items.filter(i => i.is_special && i.is_available);
+  let html = '';
+  if (specials.length){
+    html += '<div class="specials"><h3>Σήμερα προτείνουμε</h3><ul>'
+          + specials.map(li).join('') + '</ul></div>';
+  }
+  for (const c of d.cats){
+    const its = d.items.filter(i => i.category_id === c.id);
+    if (!its.length) continue;
+    html += '<section id="c'+c.id+'"><h2>'+esc(c.name)+'</h2>'
+          + (c.subtitle ? '<div class="sub">'+esc(c.subtitle)+'</div>' : '')
+          + '<ul>' + its.map(li).join('') + '</ul></section>';
+  }
+  document.getElementById('body').innerHTML = html;
+}
+
+(async () => {
+  const c = cache.load(); if (c) render(c);
+  try { const d = await loadMenu(); cache.save(d); render(d); }
+  catch (e){ if (!c) document.getElementById('body').innerHTML =
+    '<div class="load">Δεν ήταν δυνατή η φόρτωση. Δοκιμάστε ξανά.</div>'; }
+  watchMenu(async () => { try { const d = await loadMenu(); cache.save(d); render(d); } catch(e){} }, 120000);
+})();
+</script>
+</body>
+</html>

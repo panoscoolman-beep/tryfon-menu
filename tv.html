@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<title>Τρύφων — Οθόνη μενού</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+  :root{
+    --ink:#12100e; --ink2:#1b1713; --cream:#f6efe4; --muted:#a4917a;
+    --accent:#d98d4a; --olive:#8a9a63; --line:rgba(246,239,228,.13);
+    --bg2:#221c17;
+    --fh:'Alegreya','Noto Serif',Georgia,serif;
+    --fb:'Roboto',system-ui,sans-serif;
+    /* Η βασική μονάδα κλίμακας: όλα δένουν με το ύψος της οθόνης */
+    --u: .92vh;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--cream);
+    font-family:var(--fb);-webkit-font-smoothing:antialiased}
+  body{display:flex;flex-direction:column;
+    background:radial-gradient(120% 80% at 50% 0%, var(--bg2) 0%, var(--ink) 65%)}
+
+  /* Ελαφρύ «μετακίνημα» ανά 12 λεπτά — προστασία από burn-in */
+  /* Στρώσεις φόντου: εικόνα, από πάνω πέπλο στο χρώμα του θέματος */
+  #bg,#scrim{position:fixed;inset:0;display:var(--bgdisp,none)}
+  #bg{background-image:var(--bgimg,none);background-size:cover;background-position:center;z-index:0}
+  #scrim{background:var(--ink);opacity:var(--dim,.7);z-index:1}
+
+  #frame{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;min-height:0;
+    animation:drift 720s linear infinite;padding:calc(var(--u)*3) calc(var(--u)*4)}
+  @keyframes drift{
+    0%{transform:translate(0,0)} 25%{transform:translate(5px,4px)}
+    50%{transform:translate(0,8px)} 75%{transform:translate(-5px,4px)} 100%{transform:translate(0,0)}
+  }
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;
+    gap:calc(var(--u)*2);padding-bottom:calc(var(--u)*1.6);
+    border-bottom:2px solid var(--line);flex:0 0 auto}
+  .brand{font-family:var(--fh);font-weight:700;
+    font-size:calc(var(--u)*4.4);line-height:1.05;letter-spacing:.5px}
+  .tagline{color:var(--muted);font-size:calc(var(--u)*1.8);letter-spacing:.22em;
+    text-transform:uppercase;margin-top:calc(var(--u)*.6)}
+  .clock{font-size:calc(var(--u)*3.2);font-weight:500;color:var(--muted);
+    font-variant-numeric:tabular-nums}
+
+  #stage{position:relative;flex:1;min-height:0;margin-top:calc(var(--u)*2)}
+  .page{position:absolute;inset:0;display:flex;flex-direction:column;min-height:0;
+    opacity:0;transition:opacity .7s ease}
+  .page.on{opacity:1}
+  #probe{position:absolute;inset:0;visibility:hidden;pointer-events:none;
+    display:flex;flex-direction:column;min-height:0}
+
+  .cat{flex:0 0 auto;display:flex;align-items:flex-end;gap:calc(var(--u)*1.6);
+    margin-bottom:calc(var(--u)*2)}
+  .cat h2{font-family:var(--fh);font-weight:700;
+    font-size:calc(var(--u)*4.2);color:var(--accent);line-height:1.05}
+  .cat .sub{display:block;color:var(--muted);font-size:calc(var(--u)*2);
+    font-style:italic;margin-top:calc(var(--u)*.4)}
+  .cat .part{margin-left:auto;color:var(--muted);font-size:calc(var(--u)*2);
+    font-variant-numeric:tabular-nums;flex:0 0 auto}
+
+  .items{flex:1;min-height:0;overflow:hidden;
+    display:flex;flex-direction:column;gap:calc(var(--u)*1.7)}
+
+  .item{display:grid;grid-template-columns:1fr auto;column-gap:calc(var(--u)*2);
+    align-items:baseline;flex:0 0 auto}
+  .item .nm{font-size:calc(var(--u)*3.1);font-weight:500;line-height:1.15}
+  .item .desc{grid-column:1;color:var(--muted);font-size:calc(var(--u)*2.05);
+    line-height:1.25;margin-top:calc(var(--u)*.35)}
+  .item .pr{font-family:var(--fh);font-weight:700;
+    font-size:calc(var(--u)*3.2);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .item .unit{color:var(--muted);font-size:calc(var(--u)*1.9);font-weight:400}
+  .tag{display:inline-block;vertical-align:middle;margin-left:calc(var(--u)*1.2);
+    font-size:calc(var(--u)*1.6);letter-spacing:.12em;text-transform:uppercase;
+    padding:calc(var(--u)*.35) calc(var(--u)*1);border-radius:99px;
+    border:1px solid var(--line);color:var(--muted)}
+  .tag.hot{color:var(--ink);background:var(--accent);border-color:var(--accent);font-weight:700}
+  .item.out{opacity:.34}
+  .item.out .nm{text-decoration:line-through;text-decoration-thickness:2px}
+
+  .page.special .cat h2{color:var(--olive)}
+  .page.special .item .nm{font-size:calc(var(--u)*3.4)}
+  .page.special .items{justify-content:center}
+
+  footer{flex:0 0 auto;margin-top:calc(var(--u)*1.6);padding-top:calc(var(--u)*1.4);
+    border-top:1px solid var(--line);display:flex;align-items:center;
+    gap:calc(var(--u)*2);color:var(--muted);font-size:calc(var(--u)*1.6);line-height:1.35}
+  footer span:first-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden}
+  .dots{display:flex;gap:calc(var(--u)*.9);margin-left:auto;flex:0 0 auto}
+  .dot{width:calc(var(--u)*1);height:calc(var(--u)*1);border-radius:99px;
+    background:var(--line);transition:background .4s,transform .4s}
+  .dot.on{background:var(--accent);transform:scale(1.4)}
+  .offline{color:#e0794f}
+
+  #boot{position:fixed;inset:0;display:grid;place-items:center;background:var(--ink);
+    font-size:calc(var(--u)*2.4);color:var(--muted);z-index:9}
+  #boot.hide{display:none}
+</style>
+</head>
+<body>
+<div id="bg"></div><div id="scrim"></div>
+<div id="frame">
+  <header>
+    <div>
+      <div class="brand" id="brand">Τρύφων</div>
+      <div class="tagline" id="tagline"></div>
+    </div>
+    <div class="clock" id="clock"></div>
+  </header>
+
+  <div id="stage"><div id="probe"></div></div>
+
+  <footer>
+    <span id="note"></span>
+    <span class="dots" id="dots"></span>
+  </footer>
+</div>
+<div id="boot">Φόρτωση μενού…</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+let pages = [], idx = 0, timer = null, seconds = 12;
+
+function tickClock(){
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('el-GR',{hour:'2-digit',minute:'2-digit',hour12:false});
+}
+setInterval(tickClock, 10000); tickClock();
+
+function itemHTML(it){
+  const tags = [];
+  if (it.is_special && it.is_available) tags.push('<span class="tag hot">Σήμερα</span>');
+  if (!it.is_available) tags.push('<span class="tag">Τελείωσε</span>');
+  if (it.notes) tags.push('<span class="tag">'+esc(it.notes)+'</span>');
+  return '<div class="item'+(it.is_available?'':' out')+'">'
+    + '<div class="nm">'+esc(it.name)+tags.join('')+'</div>'
+    + '<div class="pr">'+money(it.price)
+      + (it.unit ? ' <span class="unit">/ '+esc(it.unit)+'</span>' : '')
+    + '</div>'
+    + (it.description ? '<div class="desc">'+esc(it.description)+'</div>' : '')
+    + '</div>';
+}
+
+function headHTML(def){
+  return '<div class="cat"><div><h2>'+esc(def.title)+'</h2>'
+    + (def.subtitle ? '<span class="sub">'+esc(def.subtitle)+'</span>' : '')
+    + '</div><span class="part"></span></div>';
+}
+
+/* Σπάει κάθε κατηγορία σε όσες σελίδες χρειάζεται ώστε να ΧΩΡΑΕΙ πάντα στην οθόνη */
+function paginate(defs){
+  const probe = document.getElementById('probe');
+  const out = [];
+  for (const def of defs){
+    probe.className = def.special ? 'page special' : 'page';
+    probe.innerHTML = headHTML(def) + '<div class="items"></div>';
+    // Χειρότερη περίπτωση κεφαλίδας: με αρίθμηση σελίδας, ώστε να μη «ξεχειλίσει» μετά
+    probe.querySelector('.part').textContent = '1/1';
+    const list = probe.querySelector('.items');
+    let current = [];
+    for (const it of def.items){
+      list.insertAdjacentHTML('beforeend', itemHTML(it));
+      const el = list.lastElementChild;
+      if (list.scrollHeight > list.clientHeight + 1 && current.length){
+        list.removeChild(el);
+        out.push({...def, items: current});
+        current = [];
+        list.innerHTML = '';
+        list.insertAdjacentHTML('beforeend', itemHTML(it));
+      }
+      current.push(it);
+    }
+    if (current.length) out.push({...def, items: current});
+  }
+  // αρίθμηση 1/2 όπου μια κατηγορία έσπασε σε πολλές σελίδες
+  const counts = {};
+  out.forEach(p => counts[p.title] = (counts[p.title]||0)+1);
+  const seen = {};
+  out.forEach(p => { seen[p.title]=(seen[p.title]||0)+1;
+    p.part = counts[p.title] > 1 ? seen[p.title]+'/'+counts[p.title] : ''; });
+  return out;
+}
+
+function render(data){
+  applyLook(data.settings);
+  document.getElementById('brand').textContent = data.settings.shop_name || 'Τρύφων';
+  document.getElementById('tagline').textContent = data.settings.tagline || '';
+  document.getElementById('note').textContent = data.settings.footer_note || '';
+  seconds = Math.max(5, data.settings.page_seconds || 12);
+
+  const defs = [];
+  const specials = data.items.filter(i => i.is_special && i.is_available);
+  if (specials.length) defs.push({title:'Σήμερα', subtitle:'προτάσεις της κουζίνας', special:true, items:specials});
+  for (const c of data.cats){
+    const its = data.items.filter(i => i.category_id === c.id);
+    if (its.length) defs.push({title:c.name, subtitle:c.subtitle, items:its});
+  }
+
+  pages = paginate(defs);
+  const stage = document.getElementById('stage');
+  stage.querySelectorAll('.page:not(#probe)').forEach(n => n.remove());
+  pages.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'page' + (p.special ? ' special' : '');
+    el.innerHTML = headHTML(p) + '<div class="items">' + p.items.map(itemHTML).join('') + '</div>';
+    el.querySelector('.part').textContent = p.part;
+    stage.appendChild(el);
+  });
+  document.getElementById('dots').innerHTML = pages.map(() => '<span class="dot"></span>').join('');
+
+  idx = Math.min(idx, pages.length - 1);
+  show(idx); restart();
+  document.getElementById('boot').classList.add('hide');
+}
+
+function show(i){
+  const nodes = [...document.querySelectorAll('#stage .page:not(#probe)')];
+  const dots = [...document.querySelectorAll('.dot')];
+  nodes.forEach((n,k) => n.classList.toggle('on', k===i));
+  dots.forEach((d,k) => d.classList.toggle('on', k===i));
+}
+function restart(){
+  clearInterval(timer);
+  if (pages.length > 1) timer = setInterval(() => { idx=(idx+1)%pages.length; show(idx); }, seconds*1000);
+}
+
+async function refresh(){
+  try {
+    const data = await loadMenu();
+    cache.save(data);
+    document.getElementById('note').classList.remove('offline');
+    render(data);
+  } catch (e){
+    const c = cache.load();
+    if (c){ render(c); document.getElementById('note').classList.add('offline'); }
+    else document.getElementById('boot').textContent = 'Χωρίς σύνδεση — προσπάθεια σε λίγο…';
+  }
+}
+
+const c0 = cache.load(); if (c0) render(c0);
+refresh();
+watchMenu(refresh, 60000);
+window.addEventListener('resize', () => { const c = cache.load(); if (c) render(c); });
+</script>
+</body>
+</html>

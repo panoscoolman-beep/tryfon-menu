@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<title>Τρύφων — Διαχείριση μενού</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6efe4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@700&family=Roboto:wght@400;500;700&display=swap&subset=greek" rel="stylesheet">
+<style>
+  :root{--bg:#f6efe4;--card:#fffaf2;--ink:#231c15;--muted:#8a7a66;
+        --accent:#b8632a;--olive:#6d7d47;--red:#b4462f;--line:#e2d6c4}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--ink);font-family:'Roboto',system-ui,sans-serif;font-size:16px}
+  .wrap{max-width:620px;margin:0 auto;padding:0 14px 90px}
+  h1{font-family:'Alegreya',Georgia,serif;font-size:26px}
+  input,select,button,textarea{font:inherit;color:inherit}
+  input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);
+    border-radius:10px;background:#fff}
+  label{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);margin:12px 0 5px}
+  button{cursor:pointer;border:0;border-radius:10px;padding:12px 16px;
+    background:var(--ink);color:#fff;font-weight:500}
+  button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+  button.danger{background:transparent;color:var(--red);border:1px solid var(--line)}
+  button.sm{padding:8px 12px;font-size:14px}
+
+  /* Login */
+  #login{max-width:380px;margin:70px auto;padding:0 18px;text-align:center}
+  #login form{margin-top:22px;text-align:left}
+  #login button{width:100%;margin-top:18px;padding:15px}
+
+  /* Top bar */
+  topbar,.topbar{position:sticky;top:0;z-index:10;background:var(--bg);
+    border-bottom:1px solid var(--line);margin:0 -14px 14px;padding:14px;
+    display:flex;align-items:center;gap:10px}
+  .role{font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;
+    border-radius:99px;background:var(--olive);color:#fff;font-weight:700}
+  .role.staff{background:var(--muted)}
+  .spacer{margin-left:auto}
+  .tabs{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto}
+  .tabs button{flex:0 0 auto;background:var(--card);color:var(--ink);
+    border:1px solid var(--line);font-weight:400}
+  .tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* Λίστα πιάτων */
+  .cat{margin-top:26px}
+  .cat h2{font-family:'Alegreya',Georgia,serif;font-size:20px;color:var(--accent);
+    display:flex;align-items:center;gap:10px}
+  .row{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:12px 14px;margin-top:10px}
+  .row.out{opacity:.55}
+  .top{display:flex;align-items:flex-start;gap:12px}
+  .nm{font-weight:500;line-height:1.25}
+  .nm s{color:var(--muted)}
+  .meta{color:var(--muted);font-size:13px;margin-top:3px}
+  .pr{margin-left:auto;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .ctrls{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap;align-items:center}
+
+  .sw{display:inline-flex;align-items:center;gap:9px;font-size:14px;cursor:pointer;
+    user-select:none;padding:6px 0}
+  .sw i{width:50px;height:29px;border-radius:99px;background:#d5c8b4;position:relative;
+    transition:background .18s;flex:0 0 auto}
+  .sw i::after{content:'';position:absolute;top:3px;left:3px;width:23px;height:23px;
+    border-radius:99px;background:#fff;transition:transform .18s;
+    box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .sw.on i{background:var(--olive)}
+  .sw.on i::after{transform:translateX(21px)}
+  .star{border:1px solid var(--line);background:transparent;color:var(--muted);
+    border-radius:99px;padding:7px 13px;font-size:14px}
+  .star.on{background:var(--olive);border-color:var(--olive);color:#fff;font-weight:500}
+
+  .swatches{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .sw-t{border:2px solid transparent;border-radius:12px;padding:14px 12px;text-align:left;
+    font-size:14px;font-weight:500;box-shadow:0 0 0 1px var(--line)}
+  .sw-t.on{border-color:var(--ink)}
+  .sw-t .dot{display:inline-block;width:10px;height:10px;border-radius:99px;
+    margin-right:8px;vertical-align:middle}
+  .sw-f{background:var(--card);border:2px solid var(--line);border-radius:12px;
+    padding:16px 12px;color:var(--ink);font-size:18px}
+  .sw-f.on{border-color:var(--ink)}
+  .bgrow{display:flex;gap:10px;align-items:center}
+  .bgthumb{width:88px;height:56px;flex:0 0 auto;border-radius:10px;border:1px solid var(--line);
+    background:#e8ddcb center/cover no-repeat;display:grid;place-items:center;
+    color:var(--muted);font-size:11px;text-align:center;overflow:hidden}
+  .filebtn{flex:1;text-align:center;background:transparent;color:var(--muted);
+    border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;font-size:14px}
+  .filebtn input{display:none}
+  input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--olive)}
+  .preview{width:224px;height:398px;margin:0 auto;border:1px solid var(--line);
+    border-radius:14px;overflow:hidden;background:#000}
+  .preview iframe{width:100%;height:100%;border:0;display:block}
+  .edit{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .acts{display:flex;gap:8px;margin-top:14px}
+
+  #toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,120%);
+    background:var(--ink);color:#fff;padding:13px 18px;border-radius:12px;
+    max-width:92vw;font-size:14px;transition:transform .25s;z-index:99;line-height:1.4}
+  #toast.on{transform:translate(-50%,0)}
+  #toast.bad{background:var(--red)}
+  .hint{color:var(--muted);font-size:13px;line-height:1.5;margin-top:8px}
+  .links{display:flex;gap:10px;margin-top:26px}
+  .links a{flex:1;text-align:center;text-decoration:none;color:var(--ink);
+    background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:14px}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h1>Μενού Τρύφων</h1>
+  <p class="hint">Σύνδεση διαχείρισης</p>
+  <form id="loginForm">
+    <label>Email</label><input type="email" id="email" autocomplete="username" required>
+    <label>Κωδικός</label><input type="password" id="pass" autocomplete="current-password" required>
+    <button type="submit">Σύνδεση</button>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="topbar">
+    <strong id="shop">Τρύφων</strong>
+    <span class="role" id="role"></span>
+    <span class="spacer"></span>
+    <button class="ghost sm" id="logout">Έξοδος</button>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div id="view"></div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+let S = { role:null, cats:[], items:[], settings:{}, tab:'items', editing:null };
+
+const $ = (id) => document.getElementById(id);
+function toast(msg, bad){
+  const t = $('toast'); t.textContent = msg; t.className = 'on' + (bad ? ' bad' : '');
+  clearTimeout(t._t); t._t = setTimeout(() => t.className = '', bad ? 4200 : 2200);
+}
+
+/* ---------- Auth ---------- */
+$('loginForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const { error } = await sb.auth.signInWithPassword({ email:$('email').value.trim(), password:$('pass').value });
+  if (error) return toast('Λάθος email ή κωδικός', true);
+  boot();
+};
+$('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+async function boot(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session){ $('login').hidden = false; $('app').hidden = true; return; }
+  const { data:prof } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+  S.role = prof?.role || 'staff';
+  $('login').hidden = true; $('app').hidden = false;
+  $('role').textContent = S.role === 'owner' ? 'Ιδιοκτήτης' : 'Προσωπικό';
+  $('role').className = 'role' + (S.role === 'owner' ? '' : ' staff');
+  await refresh();
+}
+
+async function refresh(){
+  const d = await loadMenu();
+  S.cats = d.allCats; S.items = d.items; S.settings = d.settings;
+  $('shop').textContent = d.settings.shop_name || 'Τρύφων';
+  draw();
+}
+
+/* ---------- Γράψιμο ---------- */
+async function save(table, id, patch){
+  const { error } = await sb.from(table).update(patch).eq('id', id);
+  if (error){ toast(error.message, true); await refresh(); return false; }
+  await refresh(); return true;
+}
+
+/* ---------- Render ---------- */
+function draw(){
+  const tabs = [['items','Πιάτα']];
+  if (S.role === 'owner') tabs.push(['cats','Κατηγορίες'], ['set','Ρυθμίσεις']);
+  $('tabs').innerHTML = tabs.map(([k,l]) =>
+    '<button class="'+(S.tab===k?'on':'')+'" onclick="S.tab=\''+k+'\';S.editing=null;draw()">'+l+'</button>').join('');
+  $('view').innerHTML = S.tab === 'items' ? viewItems() : S.tab === 'cats' ? viewCats() : viewSettings();
+  if (S.tab === 'set') syncPick();
+}
+
+function viewItems(){
+  const owner = S.role === 'owner';
+  let h = owner ? '' : '<p class="hint">Μπορείς να δηλώσεις τι τελείωσε και τι είναι το πιάτο της ημέρας. Οι τιμές αλλάζουν μόνο από τον ιδιοκτήτη.</p>';
+  for (const c of S.cats){
+    const its = S.items.filter(i => i.category_id === c.id);
+    h += '<div class="cat"><h2>'+esc(c.name)+'</h2>';
+    its.forEach((it, k) => h += rowHTML(it, k, its.length, owner));
+    if (owner) h += '<div class="acts"><button class="ghost sm" onclick="addItem(\''+c.id+'\')">+ Νέο πιάτο</button></div>';
+    h += '</div>';
+  }
+  h += '<div class="links"><a href="tv.html" target="_blank">Προβολή οθόνης</a>'
+     + '<a href="index.html" target="_blank">Κατάλογος πελάτη</a></div>';
+  return h;
+}
+
+function rowHTML(it, k, n, owner){
+  const editing = S.editing === it.id;
+  let h = '<div class="row'+(it.is_available?'':' out')+'"><div class="top">'
+    + '<div><div class="nm">'+(it.is_available?esc(it.name):'<s>'+esc(it.name)+'</s>')+'</div>'
+    + '<div class="meta">'+esc(it.description || '')+(it.notes?' · '+esc(it.notes):'')+'</div></div>'
+    + '<div class="pr">'+money(it.price)+'</div></div>'
+    + '<div class="ctrls">'
+    + '<span class="sw'+(it.is_available?' on':'')+'" onclick="toggle(\''+it.id+'\',\'is_available\','+!it.is_available+')"><i></i>'
+      + (it.is_available ? 'Διαθέσιμο' : 'Τελείωσε') + '</span>'
+    + '<button class="star'+(it.is_special?' on':'')+'" onclick="toggle(\''+it.id+'\',\'is_special\','+!it.is_special+')">★ Σήμερα</button>';
+  if (owner){
+    h += '<span class="spacer"></span>'
+      + (k>0   ? '<button class="ghost sm" onclick="move(\''+it.id+'\',-1)">↑</button>' : '')
+      + (k<n-1 ? '<button class="ghost sm" onclick="move(\''+it.id+'\',1)">↓</button>' : '')
+      + '<button class="ghost sm" onclick="S.editing=\''+(editing?'':it.id)+'\';draw()">'+(editing?'Κλείσιμο':'Αλλαγή')+'</button>';
+  }
+  h += '</div>';
+  if (editing && owner) h += editHTML(it);
+  return h + '</div>';
+}
+
+function editHTML(it){
+  return '<div class="edit">'
+    + '<label>Όνομα</label><input id="f_name" value="'+esc(it.name)+'">'
+    + '<label>Περιγραφή</label><input id="f_desc" value="'+esc(it.description||'')+'">'
+    + '<div class="g2"><div><label>Τιμή (€)</label><input id="f_price" type="number" step="0.10" inputmode="decimal" value="'+(it.price??'')+'"></div>'
+    + '<div><label>Μονάδα</label><input id="f_unit" value="'+esc(it.unit||'')+'" placeholder="μερίδα / κιλό / 500 ml"></div></div>'
+    + '<label>Ένδειξη (π.χ. κατεψυγμένο)</label><input id="f_notes" value="'+esc(it.notes||'')+'">'
+    + '<label>Κατηγορία</label><select id="f_cat">'
+      + S.cats.map(c => '<option value="'+c.id+'"'+(c.id===it.category_id?' selected':'')+'>'+esc(c.name)+'</option>').join('')
+    + '</select>'
+    + '<div class="acts"><button onclick="saveItem(\''+it.id+'\')">Αποθήκευση</button>'
+    + '<button class="danger" onclick="delItem(\''+it.id+'\')">Διαγραφή</button></div></div>';
+}
+
+function viewCats(){
+  let h = '<p class="hint">Η σειρά εδώ είναι και η σειρά που εναλλάσσονται οι σελίδες στην οθόνη.</p>';
+  S.cats.forEach((c, k) => {
+    h += '<div class="row"><div class="top"><div><div class="nm">'+esc(c.name)+'</div>'
+      + '<div class="meta">'+esc(c.subtitle||'')+(c.is_visible?'':' · κρυφή')+'</div></div></div>'
+      + '<div class="ctrls">'
+      + '<span class="sw'+(c.is_visible?' on':'')+'" onclick="toggleCat(\''+c.id+'\','+!c.is_visible+')"><i></i>'+(c.is_visible?'Ορατή':'Κρυφή')+'</span>'
+      + '<span class="spacer"></span>'
+      + (k>0 ? '<button class="ghost sm" onclick="moveCat(\''+c.id+'\',-1)">↑</button>' : '')
+      + (k<S.cats.length-1 ? '<button class="ghost sm" onclick="moveCat(\''+c.id+'\',1)">↓</button>' : '')
+      + '<button class="ghost sm" onclick="renameCat(\''+c.id+'\')">Αλλαγή</button>'
+      + '<button class="danger sm" onclick="delCat(\''+c.id+'\')">Διαγραφή</button>'
+      + '</div></div>';
+  });
+  h += '<div class="acts"><button class="ghost" onclick="addCat()">+ Νέα κατηγορία</button></div>';
+  return h;
+}
+
+function viewSettings(){
+  const s = S.settings;
+  S.pickTheme = S.pickTheme || s.theme || 'taverna';
+  S.pickFont  = S.pickFont  || s.font  || 'classic';
+  if (S.pickBg  === undefined) S.pickBg  = s.bg_url || '';
+  if (S.pickDim === undefined) S.pickDim = s.bg_dim ?? 70;
+  Object.keys(FONTS).forEach(loadFont);
+
+  const themeBtns = Object.entries(THEMES).map(([k, t]) =>
+    '<button class="sw-t' + (k === S.pickTheme ? ' on' : '') + '" data-k="' + k + '"'
+    + ' onclick="pickTheme(\'' + k + '\')"'
+    + ' style="background:' + t.ink + ';color:' + t.text + '">'
+    + '<span class="dot" style="background:' + t.accent + '"></span>' + t.name + '</button>').join('');
+
+  const fontBtns = Object.entries(FONTS).map(([k, f]) =>
+    '<button class="sw-f' + (k === S.pickFont ? ' on' : '') + '" data-k="' + k + '"'
+    + ' onclick="pickFont(\'' + k + '\')" style="font-family:' + f.head + '">'
+    + f.name + '</button>').join('');
+
+  return '<label>Θέμα οθόνης</label><div class="swatches">' + themeBtns + '</div>'
+    + '<label>Γραμματοσειρά</label><div class="swatches">' + fontBtns + '</div>'
+    + '<label>Δική σου φωτογραφία για φόντο</label>'
+    + '<div class="bgrow">'
+      + '<div class="bgthumb" id="bgthumb"></div>'
+      + '<label class="filebtn">Επιλογή εικόνας<input type="file" accept="image/*" onchange="pickBgFile(this)"></label>'
+      + (S.pickBg ? '<button class="danger sm" onclick="clearBg()">Αφαίρεση</button>' : '')
+    + '</div>'
+    + '<label>Πόσο σκοτεινιάζει η φωτογραφία <span id="dimval">' + S.pickDim + '%</span></label>'
+    + '<input type="range" id="s_dim" min="20" max="95" step="5" value="' + S.pickDim + '"'
+      + ' oninput="document.getElementById(\'dimval\').textContent=this.value+\'%\'"'
+      + ' onchange="S.pickDim=Number(this.value);syncPick()">'
+    + '<p class="hint">Χωρίς σκοτείνιασμα η φωτογραφία τρώει τα γράμματα. Κατέβασέ το μέχρι να δεις ότι το μενού διαβάζεται από την άλλη άκρη του μαγαζιού.</p>'
+    + '<label>Προεπισκόπηση οθόνης</label>'
+    + '<div class="preview"><iframe id="prev" src="tv.html?theme=' + S.pickTheme + '&font=' + S.pickFont + '"></iframe></div>'
+    + '<p class="hint">Η προεπισκόπηση δείχνει τα πραγματικά πιάτα. Τίποτα δεν αλλάζει στην οθόνη του μαγαζιού μέχρι να πατήσεις Αποθήκευση.</p>'
+    + '<label>Δευτερόλεπτα ανά σελίδα στην οθόνη</label><input id="s_sec" type="number" min="5" max="60" value="' + (s.page_seconds || 12) + '">'
+    + '<label>Όνομα καταστήματος</label><input id="s_name" value="' + esc(s.shop_name || '') + '">'
+    + '<label>Υπότιτλος</label><input id="s_tag" value="' + esc(s.tagline || '') + '">'
+    + '<label>Κείμενο υποσέλιδου (νομικές ενδείξεις)</label><textarea id="s_note" rows="3">' + esc(s.footer_note || '') + '</textarea>'
+    + '<div class="acts"><button onclick="saveSettings()">Αποθήκευση</button></div>'
+    + '<p class="hint">Το υποσέλιδο εμφανίζεται μόνιμα στην οθόνη και στον κατάλογο του πελάτη. Θυμήσου ότι ο έντυπος τιμοκατάλογος παραμένει υποχρεωτικός.</p>';
+}
+
+function pickTheme(k){ S.pickTheme = k; syncPick(); }
+function pickFont(k){ S.pickFont = k; syncPick(); }
+function syncPick(){
+  document.querySelectorAll('.sw-t').forEach(b => b.classList.toggle('on', b.dataset.k === S.pickTheme));
+  document.querySelectorAll('.sw-f').forEach(b => b.classList.toggle('on', b.dataset.k === S.pickFont));
+  const th = document.getElementById('bgthumb');
+  if (th){
+    th.style.backgroundImage = S.pickBg ? 'url("' + S.pickBg + '")' : 'none';
+    th.textContent = S.pickBg ? '' : 'καμία';
+  }
+  const f = document.getElementById('prev');
+  if (f) f.src = 'tv.html?theme=' + S.pickTheme + '&font=' + S.pickFont
+    + '&bg=' + encodeURIComponent(S.pickBg || '') + '&dim=' + S.pickDim;
+}
+
+async function pickBgFile(input){
+  const file = input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  toast('Ανεβαίνει η εικόνα…');
+  try {
+    S.pickBg = await uploadBackground(file);
+    draw();
+    toast('Ανέβηκε. Ρύθμισε το σκοτείνιασμα και πάτα Αποθήκευση');
+  } catch (e) {
+    toast(e.message || 'Απέτυχε το ανέβασμα', true);
+  }
+}
+function clearBg(){ S.pickBg = ''; draw(); }
+
+/* ---------- Ενέργειες ---------- */
+async function toggle(id, field, val){
+  if (await save('menu_items', id, { [field]: val })) toast('Ενημερώθηκε');
+}
+async function toggleCat(id, val){ if (await save('categories', id, { is_visible: val })) toast('Ενημερώθηκε'); }
+
+async function move(id, dir){
+  const it = S.items.find(x => x.id === id);
+  const list = S.items.filter(x => x.category_id === it.category_id);
+  const i = list.indexOf(it), j = i + dir;
+  if (j < 0 || j >= list.length) return;
+  await sb.from('menu_items').update({ sort_order: list[j].sort_order }).eq('id', it.id);
+  await sb.from('menu_items').update({ sort_order: it.sort_order }).eq('id', list[j].id);
+  await refresh();
+}
+async function moveCat(id, dir){
+  const c = S.cats.find(x => x.id === id);
+  const i = S.cats.indexOf(c), j = i + dir;
+  if (j < 0 || j >= S.cats.length) return;
+  await sb.from('categories').update({ sort_order: S.cats[j].sort_order }).eq('id', c.id);
+  await sb.from('categories').update({ sort_order: c.sort_order }).eq('id', S.cats[j].id);
+  await refresh();
+}
+
+async function saveItem(id){
+  const patch = {
+    name: $('f_name').value.trim(),
+    description: $('f_desc').value.trim() || null,
+    price: $('f_price').value === '' ? null : Number($('f_price').value),
+    unit: $('f_unit').value.trim() || null,
+    notes: $('f_notes').value.trim() || null,
+    category_id: $('f_cat').value
+  };
+  if (!patch.name) return toast('Το όνομα δεν μπορεί να είναι κενό', true);
+  if (await save('menu_items', id, patch)){ S.editing = null; toast('Αποθηκεύτηκε'); draw(); }
+}
+
+async function addItem(catId){
+  const name = prompt('Όνομα πιάτου;'); if (!name) return;
+  const max = Math.max(0, ...S.items.filter(i => i.category_id === catId).map(i => i.sort_order));
+  const { data, error } = await sb.from('menu_items')
+    .insert({ category_id: catId, name: name.trim(), sort_order: max + 1, unit: 'μερίδα' }).select().single();
+  if (error) return toast(error.message, true);
+  await refresh(); S.editing = data.id; draw(); toast('Πρόσθεσε τιμή και περιγραφή');
+}
+
+async function delItem(id){
+  if (!confirm('Διαγραφή πιάτου;')) return;
+  const { error } = await sb.from('menu_items').delete().eq('id', id);
+  if (error) return toast(error.message, true);
+  S.editing = null; await refresh(); toast('Διαγράφηκε');
+}
+
+async function addCat(){
+  const name = prompt('Όνομα κατηγορίας;'); if (!name) return;
+  const max = Math.max(0, ...S.cats.map(c => c.sort_order));
+  const { error } = await sb.from('categories').insert({ name: name.trim(), sort_order: max + 1 });
+  if (error) return toast(error.message, true);
+  await refresh(); toast('Προστέθηκε');
+}
+async function renameCat(id){
+  const c = S.cats.find(x => x.id === id);
+  const name = prompt('Όνομα κατηγορίας;', c.name); if (name === null) return;
+  const subtitle = prompt('Υπότιτλος (προαιρετικό);', c.subtitle || '');
+  if (await save('categories', id, { name: name.trim(), subtitle: (subtitle||'').trim() || null })) toast('Ενημερώθηκε');
+}
+async function delCat(id){
+  if (!confirm('Διαγραφή κατηγορίας ΚΑΙ όλων των πιάτων της;')) return;
+  const { error } = await sb.from('categories').delete().eq('id', id);
+  if (error) return toast(error.message, true);
+  await refresh(); toast('Διαγράφηκε');
+}
+
+async function saveSettings(){
+  const { error } = await sb.from('settings').update({
+    shop_name: $('s_name').value.trim(),
+    tagline: $('s_tag').value.trim() || null,
+    footer_note: $('s_note').value.trim() || null,
+    page_seconds: Number($('s_sec').value) || 12,
+    theme: S.pickTheme || 'taverna',
+    font: S.pickFont || 'classic',
+    bg_url: S.pickBg || null,
+    bg_dim: S.pickDim ?? 70,
+    updated_at: new Date().toISOString()
+  }).eq('id', 1);
+  if (error) return toast(error.message, true);
+  await refresh(); toast('Αποθηκεύτηκε');
+}
+
+boot();
+</script>
+</body>
+</html>
