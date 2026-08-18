@@ -45,8 +45,12 @@
     mask:url(assets/logo.svg) center/contain no-repeat}
   body.haslogo .brand,body.haslogo .tagline{display:none}
   body.haslogo .logo{display:block}
-  body.haslogo header{justify-content:center;position:relative}
-  body.haslogo .clock{position:absolute;right:0;bottom:calc(var(--u)*1.6)}
+  /* Με το λογότυπο ενεργό: το σήμα μόνο του στην κορυφή, και από κάτω
+     η κατηγορία με την ώρα — τίποτα άλλο δεν μπαίνει στη μέση. */
+  body.haslogo header{justify-content:center;border-bottom:0;padding-bottom:0}
+  body.haslogo .clock{display:none}
+  body.haslogo .cat{border-bottom:2px solid var(--line);padding-bottom:calc(var(--u)*1.3)}
+  body.haslogo .cat .sub{display:none}
 
   #frame{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;min-height:0;
     animation:drift 720s linear infinite;
@@ -83,6 +87,9 @@
     font-style:italic;margin-top:calc(var(--u)*.4)}
   .cat .part{margin-left:auto;color:var(--muted);font-size:calc(var(--u)*2);
     font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .cat .clk{display:none;color:var(--muted);font-size:calc(var(--u)*3);flex:0 0 auto;
+    font-variant-numeric:tabular-nums;margin-left:calc(var(--u)*2)}
+  body.haslogo .cat .clk{display:block}
 
   .items{flex:1;min-height:0;overflow:hidden;
     display:flex;flex-direction:column;gap:calc(var(--u)*1.7)}
@@ -153,8 +160,8 @@ let pages = [], idx = 0, timer = null, seconds = 12;
 let lastData = null, fontsHooked = false;
 
 function tickClock(){
-  document.getElementById('clock').textContent =
-    new Date().toLocaleTimeString('el-GR',{hour:'2-digit',minute:'2-digit',hour12:false});
+  const t = new Date().toLocaleTimeString('el-GR',{hour:'2-digit',minute:'2-digit',hour12:false});
+  document.querySelectorAll('#clock, .clk').forEach(el => el.textContent = t);
 }
 setInterval(tickClock, 10000); tickClock();
 
@@ -175,7 +182,7 @@ function itemHTML(it){
 function headHTML(def){
   return '<div class="cat"><div><h2>'+esc(def.title)+'</h2>'
     + (def.subtitle ? '<span class="sub">'+esc(def.subtitle)+'</span>' : '')
-    + '</div><span class="part"></span></div>';
+    + '</div><span class="part"></span><span class="clk"></span></div>';
 }
 
 /* Σπάει κάθε κατηγορία σε όσες σελίδες χρειάζεται ώστε να ΧΩΡΑΕΙ πάντα στην οθόνη */
@@ -187,6 +194,7 @@ function paginate(defs){
     probe.innerHTML = headHTML(def) + '<div class="items"></div>';
     // Χειρότερη περίπτωση κεφαλίδας: με αρίθμηση σελίδας, ώστε να μη «ξεχειλίσει» μετά
     probe.querySelector('.part').textContent = '1/1';
+    probe.querySelector('.clk').textContent = '00:00';
     const list = probe.querySelector('.items');
     let current = [];
     for (const it of def.items){
@@ -247,6 +255,7 @@ function render(data){
   document.getElementById('dots').innerHTML = pages.map(() => '<span class="dot"></span>').join('');
 
   idx = Math.min(idx, pages.length - 1);
+  tickClock();
   show(idx); restart();
   document.getElementById('boot').classList.add('hide');
 }
