@@ -58,6 +58,16 @@ function applyLook(settings, opts) {
 
   if (opts && opts.fontOnly) return;
 
+  /* Μέγεθος γραμμάτων. Η --u είναι η μονάδα με την οποία είναι γραμμένη όλη η οθόνη,
+     οπότε αλλάζοντάς την μικραίνουν/μεγαλώνουν αναλογικά τα πάντα — και χωράνε
+     περισσότερα ή λιγότερα πιάτα ανά σελίδα. */
+  const scale = q.has('scale') ? Number(q.get('scale')) : (settings.text_scale ?? 100);
+  r.setProperty('--u', (0.92 * Math.min(140, Math.max(55, scale || 100)) / 100).toFixed(4) + 'vh');
+
+  /* Λιτή προβολή: όσο λιγότερα στοιχεία στην οθόνη, τόσο περισσότερος χώρος για φαγητά */
+  const lean = q.has('lean') ? q.get('lean') === '1' : !!settings.lean;
+  document.body.classList.toggle('lean', lean);
+
   // Φόντο: χαρτί μαγαζιού, δική του φωτογραφία, ή τίποτα
   const preset = q.has('preset') ? q.get('preset') : (settings.bg_preset || 'none');
   const bg = preset === 'paper' ? PAPER_URL
@@ -101,7 +111,7 @@ async function loadMenu() {
     cats: (cats.data || []).filter((c) => c.is_visible),
     allCats: cats.data || [],
     items: items.data || [],
-    settings: settings.data || { shop_name: 'Τρύφων', page_seconds: 12, theme: 'taverna', font: 'classic', bg_url: null, bg_dim: 70, bg_preset: 'none', bg_frame: false, show_logo: false }
+    settings: settings.data || { shop_name: 'Τρύφων', page_seconds: 12, theme: 'taverna', font: 'classic', bg_url: null, bg_dim: 70, bg_preset: 'none', bg_frame: false, show_logo: false, text_scale: 100, lean: false }
   };
 }
 

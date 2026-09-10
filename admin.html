@@ -270,6 +270,8 @@ function viewSettings(){
   if (S.pickPreset === undefined) S.pickPreset = s.bg_preset || 'none';
   if (S.pickFrame  === undefined) S.pickFrame  = !!s.bg_frame;
   if (S.pickLogo   === undefined) S.pickLogo   = !!s.show_logo;
+  if (S.pickScale  === undefined) S.pickScale  = s.text_scale ?? 100;
+  if (S.pickLean   === undefined) S.pickLean   = !!s.lean;
   Object.keys(FONTS).forEach(loadFont);
 
   const themeBtns = Object.entries(THEMES).map(([k, t]) =>
@@ -310,9 +312,20 @@ function viewSettings(){
       + '<span class="spacer"></span>'
       + '<span class="sw' + (S.pickLogo ? ' on' : '') + '" onclick="S.pickLogo=!S.pickLogo;draw()"><i></i>Λογότυπο</span>'
     + '</div><p class="hint" style="margin-top:6px">Με το λογότυπο ενεργό, η οθόνη δείχνει το σήμα του μαγαζιού αντί για το όνομα σε κείμενο.</p></div>'
+    + '<label>Μέγεθος γραμμάτων <span id="scaleval">' + S.pickScale + '%</span></label>'
+    + '<input type="range" id="s_scale" min="55" max="140" step="5" value="' + S.pickScale + '"'
+    + ' oninput="document.getElementById(\'scaleval\').textContent=this.value+\'%\'"'
+    + ' onchange="S.pickScale=Number(this.value);syncPick()">'
+    + '<p class="hint">Όσο πιο μικρό, τόσο περισσότερα πιάτα χωράνε σε μία σελίδα. Δες από κάτω πόσα χώρεσαν.</p>'
+    + '<label>Λιτή προβολή</label>'
+    + '<div class="row"><div class="ctrls" style="margin-top:0">'
+      + '<span class="sw' + (S.pickLean ? ' on' : '') + '" onclick="S.pickLean=!S.pickLean;draw()"><i></i>'
+      + (S.pickLean ? 'Ενεργή' : 'Ανενεργή') + '</span>'
+    + '</div><p class="hint" style="margin-top:6px">Κρύβει περιγραφές, μονάδες, υπότιτλο και υποσέλιδο. Μένουν όνομα και τιμή — και πολύς χώρος για φαγητά.</p></div>'
     + '<label>Προεπισκόπηση οθόνης</label>'
     + '<div class="preview"><iframe id="prev" src="tv.html?theme=' + S.pickTheme + '&font=' + S.pickFont + '"></iframe></div>'
-    + '<p class="hint">Η προεπισκόπηση δείχνει τα πραγματικά πιάτα. Τίποτα δεν αλλάζει στην οθόνη του μαγαζιού μέχρι να πατήσεις Αποθήκευση.</p>'
+    + '<p class="hint" id="fit">Μέτρηση…</p>'
+    + '<p class="hint">Η προεπισκόπηση δείχνει τα πραγματικά πιάτα, αλλά σε μικρή κάθετη οθόνη. Σε τηλεόραση χωράνε περισσότερα. Τίποτα δεν αλλάζει στην οθόνη του μαγαζιού μέχρι να πατήσεις Αποθήκευση.</p>'
     + '<label>Δευτερόλεπτα ανά σελίδα στην οθόνη</label><input id="s_sec" type="number" min="5" max="60" value="' + (s.page_seconds || 12) + '">'
     + '<label>Όνομα καταστήματος</label><input id="s_name" value="' + esc(s.shop_name || '') + '">'
     + '<label>Υπότιτλος</label><input id="s_tag" value="' + esc(s.tagline || '') + '">'
@@ -342,11 +355,26 @@ function syncPick(){
     th.style.backgroundImage = S.pickBg ? 'url("' + S.pickBg + '")' : 'none';
     th.textContent = S.pickBg ? '' : 'καμία';
   }
+  const fit = document.getElementById('fit');
+  if (fit) fit.textContent = 'Μέτρηση…';
   const f = document.getElementById('prev');
   if (f) f.src = 'tv.html?theme=' + S.pickTheme + '&font=' + S.pickFont
     + '&preset=' + S.pickPreset + '&bg=' + encodeURIComponent(S.pickBg || '')
-    + '&dim=' + S.pickDim + '&frame=' + (S.pickFrame ? 1 : 0) + '&logo=' + (S.pickLogo ? 1 : 0);
+    + '&dim=' + S.pickDim + '&frame=' + (S.pickFrame ? 1 : 0) + '&logo=' + (S.pickLogo ? 1 : 0)
+    + '&scale=' + S.pickScale + '&lean=' + (S.pickLean ? 1 : 0);
 }
+
+/* Η προεπισκόπηση μάς λέει πόσες σελίδες βγήκαν και πόσα πιάτα χώρεσαν στην πιο γεμάτη */
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin) return;
+  const d = e.data;
+  if (!d || d.tv !== 'fit') return;
+  const fit = document.getElementById('fit');
+  if (!fit) return;
+  fit.textContent = d.pages === 1
+    ? 'Όλα σε 1 σελίδα · ' + d.max + ' πιάτα'
+    : d.pages + ' σελίδες · έως ' + d.max + ' πιάτα ανά σελίδα';
+});
 
 async function pickBgFile(input){
   const file = input.files && input.files[0];
@@ -450,6 +478,8 @@ async function saveSettings(){
     bg_preset: S.pickPreset || 'none',
     bg_frame: !!S.pickFrame,
     show_logo: !!S.pickLogo,
+    text_scale: S.pickScale ?? 100,
+    lean: !!S.pickLean,
     updated_at: new Date().toISOString()
   }).eq('id', 1);
   if (error) return toast(error.message, true);

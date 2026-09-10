@@ -48,7 +48,6 @@
   /* Με το λογότυπο ενεργό: το σήμα μόνο του στην κορυφή, και από κάτω
      η κατηγορία με την ώρα — τίποτα άλλο δεν μπαίνει στη μέση. */
   body.haslogo header{justify-content:center;border-bottom:0;padding-bottom:0}
-  body.haslogo .clock{display:none}
   body.haslogo .cat{border-bottom:2px solid var(--line);padding-bottom:calc(var(--u)*1.3)}
   body.haslogo .cat .sub{display:none}
 
@@ -67,8 +66,10 @@
     font-size:calc(var(--u)*4.4);line-height:1.05;letter-spacing:.5px}
   .tagline{color:var(--muted);font-size:calc(var(--u)*1.8);letter-spacing:.22em;
     text-transform:uppercase;margin-top:calc(var(--u)*.6)}
-  .clock{font-size:calc(var(--u)*3.2);font-weight:500;color:var(--muted);
-    font-variant-numeric:tabular-nums}
+  /* Η ώρα ζει διακριτικά στην κάτω δεξιά γωνία — δεν διεκδικεί χώρο από τα φαγητά */
+  .clock{flex:0 0 auto;margin-left:calc(var(--u)*2);opacity:.65;
+    font-size:calc(var(--u)*1.7);color:var(--muted);
+    font-variant-numeric:tabular-nums;letter-spacing:.04em}
 
   #stage{position:relative;flex:1;min-height:0;margin-top:calc(var(--u)*2)}
   .page{position:absolute;inset:0;display:flex;flex-direction:column;min-height:0;
@@ -87,9 +88,6 @@
     font-style:italic;margin-top:calc(var(--u)*.4)}
   .cat .part{margin-left:auto;color:var(--muted);font-size:calc(var(--u)*2);
     font-variant-numeric:tabular-nums;flex:0 0 auto}
-  .cat .clk{display:none;color:var(--muted);font-size:calc(var(--u)*3);flex:0 0 auto;
-    font-variant-numeric:tabular-nums;margin-left:calc(var(--u)*2)}
-  body.haslogo .cat .clk{display:block}
 
   .items{flex:1;min-height:0;overflow:hidden;
     display:flex;flex-direction:column;gap:calc(var(--u)*1.7)}
@@ -113,6 +111,26 @@
   .page.special .cat h2{color:var(--olive)}
   .page.special .item .nm{font-size:calc(var(--u)*3.4)}
   .page.special .items{justify-content:center}
+
+  /* ---------- Λιτή προβολή ----------
+     Ό,τι δεν είναι όνομα πιάτου και τιμή φεύγει, και τα κενά σφίγγουν.
+     Ο σκοπός είναι ένας: να χωράνε πολλά φαγητά σε μία σελίδα. */
+  body.lean .tagline,
+  body.lean .cat .sub,
+  body.lean .item .desc,
+  body.lean .item .unit,
+  body.lean #note{display:none}
+  body.lean .brand{font-size:calc(var(--u)*3.6)}
+  body.lean header{padding-bottom:calc(var(--u)*1.1)}
+  body.lean #stage{margin-top:calc(var(--u)*1.3)}
+  body.lean .cat{margin-bottom:calc(var(--u)*1.3)}
+  body.lean .cat h2{font-size:calc(var(--u)*3.6)}
+  body.lean .items{gap:calc(var(--u)*1.15)}
+  body.lean .item .nm{font-size:calc(var(--u)*2.9)}
+  body.lean .item .pr{font-size:calc(var(--u)*2.9)}
+  body.lean .page.special .item .nm{font-size:calc(var(--u)*3.1)}
+  body.lean footer{margin-top:calc(var(--u)*1.1);padding-top:calc(var(--u)*.9)}
+  body.lean.haslogo .logo{height:calc(var(--u)*10)}
 
   footer{flex:0 0 auto;margin-top:calc(var(--u)*1.6);padding-top:calc(var(--u)*1.4);
     border-top:1px solid var(--line);display:flex;align-items:center;
@@ -140,7 +158,6 @@
       <div class="brand" id="brand">Τρύφων</div>
       <div class="tagline" id="tagline"></div>
     </div>
-    <div class="clock" id="clock"></div>
   </header>
 
   <div id="stage"><div id="probe"></div></div>
@@ -148,6 +165,7 @@
   <footer>
     <span id="note"></span>
     <span class="dots" id="dots"></span>
+    <span class="clock" id="clock"></span>
   </footer>
 </div>
 <div id="boot">Φόρτωση μενού…</div>
@@ -160,8 +178,8 @@ let pages = [], idx = 0, timer = null, seconds = 12;
 let lastData = null, fontsHooked = false;
 
 function tickClock(){
-  const t = new Date().toLocaleTimeString('el-GR',{hour:'2-digit',minute:'2-digit',hour12:false});
-  document.querySelectorAll('#clock, .clk').forEach(el => el.textContent = t);
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('el-GR',{hour:'2-digit',minute:'2-digit',hour12:false});
 }
 setInterval(tickClock, 10000); tickClock();
 
@@ -182,7 +200,7 @@ function itemHTML(it){
 function headHTML(def){
   return '<div class="cat"><div><h2>'+esc(def.title)+'</h2>'
     + (def.subtitle ? '<span class="sub">'+esc(def.subtitle)+'</span>' : '')
-    + '</div><span class="part"></span><span class="clk"></span></div>';
+    + '</div><span class="part"></span></div>';
 }
 
 /* Σπάει κάθε κατηγορία σε όσες σελίδες χρειάζεται ώστε να ΧΩΡΑΕΙ πάντα στην οθόνη */
@@ -194,22 +212,42 @@ function paginate(defs){
     probe.innerHTML = headHTML(def) + '<div class="items"></div>';
     // Χειρότερη περίπτωση κεφαλίδας: με αρίθμηση σελίδας, ώστε να μη «ξεχειλίσει» μετά
     probe.querySelector('.part').textContent = '1/1';
-    probe.querySelector('.clk').textContent = '00:00';
     const list = probe.querySelector('.items');
-    let current = [];
+    const fits = (arr) => {
+      list.innerHTML = arr.map(itemHTML).join('');
+      return list.scrollHeight <= list.clientHeight + 1;
+    };
+
+    // 1. Γεμίζουμε μέχρι να μη χωράει άλλο — έτσι βρίσκουμε πόσες σελίδες θέλει η κατηγορία
+    let chunks = [], current = [];
     for (const it of def.items){
       list.insertAdjacentHTML('beforeend', itemHTML(it));
       const el = list.lastElementChild;
       if (list.scrollHeight > list.clientHeight + 1 && current.length){
         list.removeChild(el);
-        out.push({...def, items: current});
+        chunks.push(current);
         current = [];
         list.innerHTML = '';
         list.insertAdjacentHTML('beforeend', itemHTML(it));
       }
       current.push(it);
     }
-    if (current.length) out.push({...def, items: current});
+    if (current.length) chunks.push(current);
+
+    // 2. Μοιράζουμε ισόποσα στις ίδιες σελίδες: 10+10 διαβάζεται, 19+1 όχι.
+    //    Αν για κάποιο λόγο δεν χωρέσει η ισόποση μοιρασιά, κρατάμε την αρχική.
+    if (chunks.length > 1){
+      const n = chunks.length, total = def.items.length, even = [];
+      let i = 0;
+      for (let k = 0; k < n; k++){
+        const size = Math.ceil((total - i) / (n - k));
+        even.push(def.items.slice(i, i + size));
+        i += size;
+      }
+      if (even.every(fits)) chunks = even;
+    }
+
+    chunks.forEach((c) => out.push({...def, items: c}));
   }
   // αρίθμηση 1/2 όπου μια κατηγορία έσπασε σε πολλές σελίδες
   const counts = {};
@@ -253,6 +291,14 @@ function render(data){
     stage.appendChild(el);
   });
   document.getElementById('dots').innerHTML = pages.map(() => '<span class="dot"></span>').join('');
+
+  // Στην προεπισκόπηση του admin: πόσες σελίδες βγήκαν και πόσα πιάτα χώρεσαν στην πιο γεμάτη
+  if (window.parent !== window){
+    try {
+      parent.postMessage({ tv:'fit', pages: pages.length,
+        max: pages.reduce((m, p) => Math.max(m, p.items.length), 0) }, location.origin);
+    } catch (e){}
+  }
 
   idx = Math.min(idx, pages.length - 1);
   tickClock();
